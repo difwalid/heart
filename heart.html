@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Be My Girlfriend ❤️</title>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: black;
+        font-family: Arial, sans-serif;
+    }
+
+    /* FIRST SCREEN */
+    #askScreen {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: black;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 40px;
+        z-index: 10;
+    }
+
+    #btns {
+        margin-top: 40px;
+    }
+
+    .btn {
+        font-size: 25px;
+        padding: 12px 25px;
+        margin: 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    #yesBtn {
+        background: #28a745;
+        color: white;
+    }
+
+    #noBtn {
+        background: #dc3545;
+        color: white;
+        position: absolute;
+    }
+
+    /* CANVAS */
+    #canvas {
+        display: none;
+    }
+</style>
+</head>
+
+<body>
+
+<!-- FIRST SCREEN -->
+<div id="askScreen">
+    WILL YOU BE MY GIRLFRIEND? ❤️
+    <div id="btns">
+        <button id="yesBtn" class="btn">YES</button>
+        <button id="noBtn" class="btn">NO</button>
+    </div>
+</div>
+
+<!-- HEART CANVAS -->
+<canvas id="canvas"></canvas>
+
+<script>
+/* ------------------------ */
+/*  NO BUTTON RUNS AWAY 😂  */
+/* ------------------------ */
+const noBtn = document.getElementById("noBtn");
+
+document.addEventListener("mousemove", (e) => {
+    const rect = noBtn.getBoundingClientRect();
+    const distX = Math.abs(e.clientX - (rect.left + rect.width / 2));
+    const distY = Math.abs(e.clientY - (rect.top + rect.height / 2));
+
+    if (distX < 100 && distY < 50) {
+        noBtn.style.left = Math.random() * (window.innerWidth - 150) + "px";
+        noBtn.style.top = Math.random() * (window.innerHeight - 80) + "px";
+    }
+});
+
+/* ------------------------ */
+/*    YES BUTTON → HEART    */
+/* ------------------------ */
+document.getElementById("yesBtn").onclick = () => {
+    document.getElementById("askScreen").style.display = "none";
+    document.getElementById("canvas").style.display = "block";
+    startHeart();
+};
+
+
+/* ------------------------------------------- */
+/*      RED REVERSED HEART + TEXT “FOREVER”     */
+/* ------------------------------------------- */
+function startHeart() {
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    function heartA(k) { return 15 * Math.sin(k) ** 3; }
+    function heartB(k) {
+        return 12 * Math.cos(k)
+             - 5 * Math.cos(2 * k)
+             - 2 * Math.cos(3 * k)
+             - Math.cos(4 * k);
+    }
+
+    let t = 0;
+    let particles = [];
+
+    function createParticle(x, y) {
+        particles.push({
+            x, y,
+            size: Math.random() * 3 + 1,
+            alpha: 1,
+            speedX: (Math.random() - 0.5) * 2,
+            speedY: (Math.random() - 0.5) * 2
+        });
+    }
+
+    function drawHeart() {
+        let scale = 28 + Math.sin(t * 0.08) * 6;
+
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+
+        for (let k = 0; k < 80; k++) {
+            let angle = -(t + k * 0.1);
+
+            let x = heartA(angle) * scale;
+            let y = heartB(angle) * scale;
+
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,0,0,1)`;  // FULL RED ❤️
+            ctx.shadowBlur = 25;
+            ctx.shadowColor = "red";
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            createParticle(x, y);
+        }
+
+        /* TEXT INSIDE THE HEART */
+        ctx.font = "bold 60px Arial";
+        ctx.fillStyle = "rgba(255, 0, 0, 1)";
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = "red";
+        ctx.textAlign = "center";
+        ctx.fillText("FOREVER", 0, 20);
+
+        ctx.restore();
+    }
+
+    function updateParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.speedX;
+            p.y += p.speedY;
+            p.alpha -= 0.02;
+
+            if (p.alpha <= 0) {
+                particles.splice(i, 1);
+                continue;
+            }
+
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.fillStyle = `rgba(255,0,0,${p.alpha})`;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "red";
+            ctx.fillRect(p.x, p.y, p.size, p.size);
+            ctx.restore();
+        }
+    }
+
+    function animate() {
+        t += 0.1;
+        drawHeart();
+        updateParticles();
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+}
+</script>
+
+</body>
+</html>
