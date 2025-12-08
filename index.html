@@ -9,15 +9,55 @@
         padding: 0;
         overflow: hidden;
         background: black;
-        font-family: Arial, sans-serif;
+        font-family: 'Arial', sans-serif;
     }
-
+    
+    #proposalmessage {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #000000, #330033);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 30px;
+        z-index: 10;
+    }
+    
+    /* Love-themed input */
+    .love-input {
+        width: 300px;
+        padding: 12px 20px;
+        font-size: 16px;
+        border: 2px solid #ff6b81;
+        border-radius: 30px;
+        outline: none;
+        transition: all 0.3s ease;
+        background-color: #fff0f5;
+        color: #ff3366;
+        position: relative;
+        font-family: 'Arial', sans-serif;
+        margin-bottom: 20px;
+    }
+    
+    .love-input::placeholder {
+        color: #ff99aa;
+        font-style: italic;
+    }
+    
+    .love-input:focus {
+        border-color: #ff3366;
+        box-shadow: 0 0 15px rgba(255, 51, 102, 0.7);
+    }
+    
     /* FIRST SCREEN */
     #askScreen {
         position: absolute;
         width: 100%;
         height: 100%;
-        background: black;
+        background: linear-gradient(135deg, #000000, #660033);
         color: white;
         display: flex;
         flex-direction: column;
@@ -25,12 +65,13 @@
         align-items: center;
         font-size: 40px;
         z-index: 10;
+        text-shadow: 0 0 20px rgba(255, 51, 102, 0.7);
     }
-
+    
     #btns {
         margin-top: 40px;
     }
-
+    
     .btn {
         font-size: 25px;
         padding: 12px 25px;
@@ -38,23 +79,82 @@
         border: none;
         border-radius: 10px;
         cursor: pointer;
-        transition: 0.2s;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
-
+    
     #yesBtn {
-        background: #28a745;
+        background: linear-gradient(45deg, #28a745, #20c997);
         color: white;
     }
-
+    
+    #yesBtn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(40, 167, 69, 0.7);
+    }
+    
     #noBtn {
-        background: #dc3545;
+        background: linear-gradient(45deg, #dc3545, #c82333);
         color: white;
         position: absolute;
     }
-
+    
     /* CANVAS */
     #canvas {
         display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, #0a0a2a, #1a0033);
+    }
+    
+    /* Diamond ring button */
+    .diamond-button {
+        position: relative;
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background: linear-gradient(45deg, #ff3366, #ff6b81);
+        border: 2px solid #ff99cc;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.5s ease;
+        overflow: hidden;
+        font-family: 'Arial', sans-serif;
+        margin-top: 20px;
+        box-shadow: 0 0 15px rgba(255, 51, 102, 0.5);
+    }
+    
+    .diamond-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 25px rgba(255, 51, 102, 0.8);
+        background: linear-gradient(45deg, #ff6b81, #ff3366);
+    }
+    
+    /* Clear button for flowers */
+    .cleanBtn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        background: linear-gradient(45deg, #ff3366, #ff6b81);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        z-index: 100;
+        display: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .cleanBtn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 51, 102, 0.7);
     }
 </style>
 </head>
@@ -69,9 +169,17 @@
         <button id="noBtn" class="btn">NO</button>
     </div>
 </div>
+<div id="proposalmessage" style="display: none;">
+    <h1 style="margin-bottom: 30px; color: #ff99cc;">Type your name to make the contract</h1>
+    <input type="text" id="nameInput" class="love-input" placeholder="Your beautiful name here...">
+    <button id="submitBtn" class="diamond-button">✧ Submit ✧</button>
+</div>
 
 <!-- HEART CANVAS -->
 <canvas id="canvas"></canvas>
+<h1>click on the screen to grow flowers of love</h1>
+<!-- Clear flowers button (only shown after submission) -->
+<h2 class="cleanBtn">Click on the screen to grow flower of love</h2>
 
 <script>
 /* ------------------------ */
@@ -90,21 +198,271 @@ document.addEventListener("mousemove", (e) => {
     }
 });
 
-/* ------------------------ */
-/*    YES BUTTON → HEART    */
-/* ------------------------ */
+//after pressing yes button send to the proposal screen
 document.getElementById("yesBtn").onclick = () => {
     document.getElementById("askScreen").style.display = "none";
-    document.getElementById("canvas").style.display = "block";
-    startHeart();
+    document.getElementById("proposalmessage").style.display = "block";
 };
 
+// Flower drawing functionality
+let flowerDrawingActive = false;
+let flowers = [];
+let animationId;
+
+// Flower class for growing animation
+class GrowingFlower {
+    constructor(x, targetY) {
+        this.x = x;
+        this.startY = window.innerHeight + 50; // Start from below the screen
+        this.targetY = targetY;
+        this.currentY = this.startY;
+        this.growthProgress = 0;
+        this.growthSpeed = 0.02 + Math.random() * 0.03;
+        this.fullyGrown = false;
+        
+        // Flower properties with slight variations
+        this.flowerRadius = 15 + Math.random() * 10;
+        this.centerRadius = 6 + Math.random() * 4;
+        this.petalCount = Math.floor(6 + Math.random() * 6);
+        
+        // Random colors
+        this.colors = this.getRandomColors();
+        
+        // Stem properties
+        this.stemLength = 40 + Math.random() * 30;
+        this.leafCount = Math.floor(2 + Math.random() * 3);
+        
+        // Wiggle animation when fully grown
+        this.wiggleAngle = Math.random() * Math.PI * 2;
+        this.wiggleSpeed = 0.5 + Math.random() * 1;
+        this.wiggleAmount = 0.3 + Math.random() * 0.5;
+    }
+    
+    getRandomColors() {
+        const colorSchemes = [
+            {
+                petal: ['rgba(255, 182, 193, 0.95)', 'rgba(255, 105, 180, 0.85)'],
+                center: ['#fffacd', '#ffd700'],
+                stem: '#32CD32'
+            },
+            {
+                petal: ['rgba(255, 218, 185, 0.95)', 'rgba(255, 160, 122, 0.85)'],
+                center: ['#f0e68c', '#daa520'],
+                stem: '#228B22'
+            },
+            {
+                petal: ['rgba(216, 191, 216, 0.95)', 'rgba(186, 85, 211, 0.85)'],
+                center: ['#ffe4b5', '#ffa500'],
+                stem: '#2E8B57'
+            },
+            {
+                petal: ['rgba(173, 216, 230, 0.95)', 'rgba(135, 206, 250, 0.85)'],
+                center: ['#fff8dc', '#deb887'],
+                stem: '#3CB371'
+            }
+        ];
+        return colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+    }
+    
+    update() {
+        if (!this.fullyGrown) {
+            this.growthProgress += this.growthSpeed;
+            if (this.growthProgress >= 1) {
+                this.growthProgress = 1;
+                this.fullyGrown = true;
+            }
+            
+            // Ease out growth animation
+            const easedProgress = 1 - Math.pow(1 - this.growthProgress, 3);
+            this.currentY = this.startY + (this.targetY - this.startY) * easedProgress;
+        }
+        
+        // Gentle wiggle animation when fully grown
+        if (this.fullyGrown) {
+            this.wiggleAngle += this.wiggleSpeed * 0.01;
+        }
+    }
+    
+    draw(ctx) {
+        const wiggleOffset = this.fullyGrown ? Math.sin(this.wiggleAngle) * this.wiggleAmount : 0;
+        const currentX = this.x + wiggleOffset;
+        
+        // Calculate flower height
+        const flowerHeight = this.currentY;
+        
+        // Draw growing stem
+        const visibleStemLength = this.stemLength * this.growthProgress;
+        const stemTop = flowerHeight;
+        const stemBottom = Math.min(this.startY, flowerHeight + visibleStemLength);
+        
+        ctx.strokeStyle = this.colors.stem;
+        ctx.lineWidth = 2 + Math.random();
+        ctx.lineCap = 'round';
+        
+        ctx.beginPath();
+        ctx.moveTo(currentX, stemBottom);
+        
+        // Create a slightly curved stem
+        const controlX = currentX + (Math.random() * 20 - 10) * this.growthProgress;
+        const controlY = (stemBottom + stemTop) / 2;
+        ctx.quadraticCurveTo(controlX, controlY, currentX, stemTop);
+        ctx.stroke();
+        
+        // Draw leaves that appear as the stem grows
+        if (this.growthProgress > 0.3) {
+            ctx.fillStyle = `rgba(50, 205, 50, ${0.6 * this.growthProgress})`;
+            
+            for (let i = 0; i < this.leafCount; i++) {
+                const leafProgress = Math.min(1, this.growthProgress * 1.5 - i * 0.2);
+                if (leafProgress <= 0) continue;
+                
+                const leafY = stemBottom + (stemTop - stemBottom) * (0.3 + i * 0.3);
+                const leafSize = (8 + Math.random() * 6) * leafProgress;
+                const leafAngle = Math.PI / (3 + Math.random() * 2);
+                
+                ctx.beginPath();
+                ctx.ellipse(
+                    currentX + (i % 2 === 0 ? -12 : 12) * leafProgress,
+                    leafY,
+                    leafSize,
+                    leafSize * 1.5,
+                    i % 2 === 0 ? leafAngle : -leafAngle,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+        
+        // Only draw flower head if growth is sufficient
+        if (this.growthProgress > 0.5) {
+            const flowerScale = (this.growthProgress - 0.5) * 2; // Scale from 0 to 1
+            
+            // Draw petals with growth scaling
+            for (let i = 0; i < this.petalCount; i++) {
+                const angle = (i / this.petalCount) * Math.PI * 2;
+                const petalX = currentX + Math.cos(angle) * this.flowerRadius * flowerScale;
+                const petalY = flowerHeight + Math.sin(angle) * this.flowerRadius * flowerScale;
+                
+                const petalGradient = ctx.createRadialGradient(
+                    petalX, petalY, 1,
+                    petalX, petalY, 10 * flowerScale
+                );
+                petalGradient.addColorStop(0, this.colors.petal[0]);
+                petalGradient.addColorStop(1, this.colors.petal[1]);
+                
+                ctx.fillStyle = petalGradient;
+                ctx.beginPath();
+                
+                const petalWidth = 8 * flowerScale;
+                const petalHeight = 12 * flowerScale;
+                ctx.ellipse(petalX, petalY, petalWidth, petalHeight, angle, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw flower center with glow effect
+            if (flowerScale > 0.7) {
+                const centerGradient = ctx.createRadialGradient(
+                    currentX, flowerHeight, 0,
+                    currentX, flowerHeight, this.centerRadius * flowerScale
+                );
+                centerGradient.addColorStop(0, this.colors.center[0]);
+                centerGradient.addColorStop(1, this.colors.center[1]);
+                
+                ctx.fillStyle = centerGradient;
+                ctx.beginPath();
+                ctx.arc(currentX, flowerHeight, this.centerRadius * flowerScale, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add sparkle effect to center when fully grown
+                if (this.fullyGrown) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(
+                        currentX - this.centerRadius/3 * flowerScale,
+                        flowerHeight - this.centerRadius/3 * flowerScale,
+                        this.centerRadius/4 * flowerScale,
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+            }
+        }
+    }
+}
+
+// Function to handle canvas click for growing flowers
+function handleCanvasClick(event) {
+    if (!flowerDrawingActive) return;
+    
+    const canvas = document.getElementById("canvas");
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Add a growing flower at clicked position
+    flowers.push(new GrowingFlower(x, y));
+}
+
+// Function to clear all flowers
+function clearFlowers() {
+    flowers = [];
+}
+
+// Function to update and draw all flowers
+function updateAndDrawAllFlowers(ctx) {
+    // Remove fully grown flowers that are too old (optional)
+    flowers = flowers.filter(flower => true); // Keep all for now
+    
+    // Update and draw each flower
+    flowers.forEach(flower => {
+        flower.update();
+        flower.draw(ctx);
+    });
+}
+
+//submit button - show the heart after submitting name
+document.getElementById("submitBtn").onclick = () => {
+    const name = document.getElementById("nameInput").value;
+    if (name.trim() !== "") {
+        document.getElementById("proposalmessage").style.display = "none";
+        document.getElementById("canvas").style.display = "block";
+        
+        // Show clear button
+        document.querySelector('.cleanBtn').style.display = 'block';
+        
+        // Start heart animation and enable flower drawing
+        startHeart(name);
+        flowerDrawingActive = true;
+        
+        // Add click event for growing flowers
+        const canvas = document.getElementById("canvas");
+        canvas.addEventListener('click', handleCanvasClick);
+        
+        // Add clear button event
+        document.querySelector('.cleanBtn').addEventListener('click', clearFlowers);
+        
+        // Add initial growing flowers from bottom after a delay
+        setTimeout(() => {
+            const canvas = document.getElementById("canvas");
+            
+            // Create flowers growing from bottom at random positions
+            for (let i = 0; i < 8; i++) {
+                const x = 50 + (canvas.width - 100) * (i / 8) + Math.random() * 30 - 15;
+                const y = canvas.height * 0.3 + Math.random() * canvas.height * 0.4;
+                flowers.push(new GrowingFlower(x, y));
+            }
+        }, 1000);
+        
+    } else {
+        alert("Please enter your name to make the contract.");
+    }
+};
 
 /* ------------------------------------------- */
-/*      RED REVERSED HEART + TEXT “FOREVER”     */
+/*      RED REVERSED HEART + TEXT "NAME"       */
 /* ------------------------------------------- */
-function startHeart() {
-
+function startHeart(name) {
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -125,18 +483,22 @@ function startHeart() {
     function createParticle(x, y) {
         particles.push({
             x, y,
-            size: Math.random() * 3 + 1,
+            size: Math.random() * 4 + 1,
             alpha: 1,
-            speedX: (Math.random() - 0.5) * 2,
-            speedY: (Math.random() - 0.5) * 2
+            speedX: (Math.random() - 0.5) * 3,
+            speedY: (Math.random() - 0.5) * 3
         });
     }
 
-    function drawHeart() {
+    function animateHeartAndFlowers() {
         let scale = 28 + Math.sin(t * 0.08) * 6;
 
-        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        // Create a dark overlay for trail effect
+        ctx.fillStyle = "rgba(10, 10, 42, 0.1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw all growing flowers
+        updateAndDrawAllFlowers(ctx);
 
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -147,10 +509,15 @@ function startHeart() {
             let x = heartA(angle) * scale;
             let y = heartB(angle) * scale;
 
+            // Create gradient for heart points
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, 5);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, 1)');
+            
             ctx.beginPath();
-            ctx.fillStyle = `rgba(255,0,0,1)`;  // FULL RED ❤️
+            ctx.fillStyle = gradient;
             ctx.shadowBlur = 25;
-            ctx.shadowColor = "red";
+            ctx.shadowColor = "rgba(255, 0, 0, 0.7)";
             ctx.arc(x, y, 2, 0, Math.PI * 2);
             ctx.fill();
 
@@ -158,22 +525,25 @@ function startHeart() {
         }
 
         /* TEXT INSIDE THE HEART */
-        ctx.font = "bold 60px Arial";
-        ctx.fillStyle = "rgba(255, 0, 0, 1)";
+        ctx.font = "bold 60px 'Arial', sans-serif";
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
         ctx.shadowBlur = 30;
-        ctx.shadowColor = "red";
+        ctx.shadowColor = "rgba(255, 0, 0, 0.8)";
         ctx.textAlign = "center";
-        ctx.fillText("FOREVER", 0, 20);
+        ctx.fillText(name.toUpperCase(), 0, 20);
 
         ctx.restore();
+        
+        // Update and draw particles
+        updateParticles(ctx);
     }
 
-    function updateParticles() {
+    function updateParticles(ctx) {
         for (let i = particles.length - 1; i >= 0; i--) {
             let p = particles[i];
             p.x += p.speedX;
             p.y += p.speedY;
-            p.alpha -= 0.02;
+            p.alpha -= 0.015;
 
             if (p.alpha <= 0) {
                 particles.splice(i, 1);
@@ -182,23 +552,42 @@ function startHeart() {
 
             ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.fillStyle = `rgba(255,0,0,${p.alpha})`;
+            const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${p.alpha})`);
+            gradient.addColorStop(1, `rgba(255, 0, 0, ${p.alpha * 0.5})`);
+            
+            ctx.fillStyle = gradient;
             ctx.shadowBlur = 10;
-            ctx.shadowColor = "red";
-            ctx.fillRect(p.x, p.y, p.size, p.size);
+            ctx.shadowColor = "rgba(255, 0, 0, 0.5)";
+            ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
             ctx.restore();
         }
     }
 
     function animate() {
         t += 0.1;
-        drawHeart();
-        updateParticles();
-        requestAnimationFrame(animate);
+        animateHeartAndFlowers();
+        animationId = requestAnimationFrame(animate);
     }
 
+    // Start the animation
     animate();
 }
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    if (flowerDrawingActive && animationId) {
+        const canvas = document.getElementById("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Redraw everything
+        const name = document.getElementById("nameInput").value;
+        if (name.trim() !== "") {
+            // Animation will continue in the next frame
+        }
+    }
+});
 </script>
 
 </body>
